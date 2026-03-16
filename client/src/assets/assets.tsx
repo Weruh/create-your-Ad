@@ -109,7 +109,7 @@ export const dummyGenerations = [
         userId: 'user_1',
         userPrompt: 'Highlight the vintage appeal of the camera',
         generatedImage: product3,
-        generatedVideo: generatedVideo1,
+        generatedVideo: '  ',
         isGenerating: false,
         isPublished: false,
         createdAt: '2023-03-17T00:00:00.000Z',
