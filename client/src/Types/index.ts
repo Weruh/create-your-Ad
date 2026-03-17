@@ -23,11 +23,11 @@ export interface Project{
     productDescription?:string;
     userPrompt?: string;
     aspectRatio: string;
-    targetLength?: string;
+    targetLength?: number;
     generatedImage?: string;
     generatedVideo?: string;
     isGenerating: boolean;
-    isPublished: string;
+    isPublished: boolean;
     error?: string;
     createdAt: Date | string;
     updatedAt?: Date | string;

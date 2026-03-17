@@ -8,7 +8,6 @@ const aspectRatios = ["9:16", "1:1", "16:9"] as const;
 
 const Generator = () => {
     const [name , setName]  = useState("")
-    const [brandName, setBrandName] = useState("");
     const [productName, setProductName] = useState("");
     const [productDescription, setProductDescription] = useState("");
     const [aspectRatio, setAspectRatio] = useState<(typeof aspectRatios)[number]>("9:16");

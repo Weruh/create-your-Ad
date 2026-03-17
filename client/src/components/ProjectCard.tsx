@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom"
 import type { Project } from "../Types"
 import { EllipsisIcon, ImageIcon, Loader2Icon, PlaySquareIcon, Share2Icon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -7,9 +6,7 @@ import { useState } from "react";
 
 
 
-const ProjectCard = ({gen, setGenerations, forCommunity = false} : {gen: Project, setGenerations: React.Dispatch<React.SetStateAction<Project[]>>, forCommunity?: boolean}) => {
-
-    const navigate = useNavigate();
+const ProjectCard = ({gen, setGenerations: _setGenerations, forCommunity = false} : {gen: Project, setGenerations: React.Dispatch<React.SetStateAction<Project[]>>, forCommunity?: boolean}) => {
     const [menuOpen, setMenuOpen ] = useState(false)
     
     const handleDelete = async (id: string) =>{
@@ -17,11 +14,6 @@ const ProjectCard = ({gen, setGenerations, forCommunity = false} : {gen: Project
         if(!confirm)return;
         console.log(id)
     }
-
-    const togglePublish = async (projectId: string) =>{
-        console.log(projectId)
-    }
-
 
   return (
     <div key={gen.id} className="mb-4 break-inside-avoid">
