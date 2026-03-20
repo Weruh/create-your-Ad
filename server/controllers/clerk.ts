@@ -4,6 +4,37 @@ import { prisma } from "../configs/prisma.js";
 import * as Sentry from "@sentry/node"
 
 
+const PLAN_CREDITS = {
+    free: 20,
+    pro: 80,
+    premium: 240,
+} as const;
+
+const getClerkUserId = (data: any) => {
+    return data?.payer?.user_id || data?.subscription?.payer?.user_id || data?.user_id;
+}
+
+const getPlanSlug = (data: any) => {
+    return data?.subscription_items?.[0]?.plan?.slug
+        || data?.subscription_item?.plan?.slug
+        || data?.plan?.slug;
+}
+
+const syncUserCreditsFromPlan = async (data: any) => {
+    const clerkUserId = getClerkUserId(data);
+    const planSlug = getPlanSlug(data) as keyof typeof PLAN_CREDITS | undefined;
+
+    if (!clerkUserId || !planSlug || !(planSlug in PLAN_CREDITS)) {
+        return;
+    }
+
+    await prisma.user.updateMany({
+        where: { id: clerkUserId },
+        data: { credits: PLAN_CREDITS[planSlug] }
+    });
+}
+
+
 
 const clerkWebhooks = async (req: Request, res: Response) => {
     try {
@@ -58,24 +89,16 @@ const clerkWebhooks = async (req: Request, res: Response) => {
                 break;
             }
 
-            case "paymentAttempt.update": {
-                if ((data.charge_type === "recurring" || data.charge_type === "checkout") && data.status === "paid") {
-                    const credits = { pro: 80, premium: 240 };
-                    const clerkUserId = data?.payer?.user_id;
-                    const planId = data?.subscription_items?.[0]?.plan?.slug as keyof typeof credits;
-
-                    if (planId !== "pro" && planId !== "premium") {
-                        return res.status(400).json({ message: "Invalid subscription plan" });
-                    }
-
-                    if (clerkUserId) {
-                        // Using updateMany here as well is safer for webhooks just in case
-                        await prisma.user.updateMany({
-                            where: { id: clerkUserId },
-                            data: { credits: { increment: credits[planId] } }
-                        });
-                    }
+            case "paymentAttempt.updated": {
+                if ((data?.type === "recurring" || data?.type === "checkout") && data?.status === "paid") {
+                    await syncUserCreditsFromPlan(data);
                 }
+                break;
+            }
+
+            case "subscriptionItem.active":
+            case "subscriptionItem.updated": {
+                await syncUserCreditsFromPlan(data);
                 break;
             }
 

@@ -1,30 +1,106 @@
 import { useEffect, useState } from "react"
 import type { Project } from "../Types"
-import { dummyGenerations } from "../assets/assets"
 import { ImagesIcon, Loader2Icon, RefreshCcwIcon, SparkleIcon, VideoIcon } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { GhostButton, PrimaryButton } from "../components/Buttons"
+import { useAuth, useUser } from "@clerk/react"
+import axios from "axios"
+import api from "../configs/axios"
+import toast from "react-hot-toast"
+
 const Result = () => {
+  const {getToken} = useAuth()
+  const { user, isLoaded} = useUser()
+  const navigate = useNavigate()
+  const { projectId } = useParams<{ projectId: string }>()
+
   const [project, setProjectData] = useState<Project>({} as Project)
   const [loading, setLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
 
+  const getErrorMessage = (error: unknown) => {
+    if (axios.isAxiosError(error)) {
+      return error.response?.data?.message || error.message
+    }
+
+    if (error instanceof Error) {
+      return error.message
+    }
+
+    return "Something went wrong"
+  }
 
   const fetchProjectData = async ()=>{
-    setTimeout(() =>{
-      setProjectData(dummyGenerations[0])
-      setLoading(false)
-    },3000)
+       if (!projectId) {
+        toast.error("Project not found")
+        setLoading(false)
+        navigate("/generate")
+        return
+       }
+
+       try {
+        const token = await getToken()
+        const { data } = await api.get(`/api/user/projects/${projectId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        setProjectData(data.project)
+        setIsGenerating(data.project.isGenerating)
+        setLoading(false)
+       } catch (error) {
+        toast.error(getErrorMessage(error))
+        console.log(error)
+        setLoading(false)
+       }
   }
 
    const handleGenerateVideo = async () => {
+    if (!projectId) {
+      toast.error("Project not found")
+      return
+    }
+
     setIsGenerating(true)
+
+    try {
+      const token = await getToken()
+      const { data } = await api.post('/api/project/video', {projectId}, {
+        headers: { Authorization: `Bearer ${token}`}
+      })
+
+      setProjectData(prev => ({...prev, generatedVideo: data.videoUrl, isGenerating: false}))
+      toast.success(data.message);
+      setIsGenerating(false);
+
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+      console.log(error)
+      setIsGenerating(false)
+    }
    }
   
 
   useEffect(()=>{
-    fetchProjectData()
-  },[])
+    if (user && !project.id) {
+      fetchProjectData()
+    }else if (isLoaded && !user) {
+      navigate('/')
+    }
+    
+  },[user])
+
+  // fetch project every 10 seconds
+     useEffect(()=>{
+      if (user && isGenerating) {
+        const interval = setInterval(()=> {
+          fetchProjectData()
+        },10000);
+        return ()=> clearInterval(interval)
+      }
+     },[user, isGenerating])
+
+
+
+
   return loading ?  (
     <div className="h-screen w-full flex items-center justify-center">
        <Loader2Icon className="animate-spin text-indigo size-9" />
