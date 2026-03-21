@@ -33,13 +33,13 @@ export default function Faq() {
                                     card.classList.add("transition", "duration-300");
                                 }
                             }}
-                            className="group bg-white/6 rounded-xl select-none"
+                            className="group surface-panel rounded-2xl select-none"
                         >
                             <summary className="flex items-center justify-between p-4 cursor-pointer">
-                                <h4 className="font-medium">{faq.question}</h4>
-                                <ChevronDownIcon className="w-5 h-5 text-gray-300 group-open:rotate-180 transition-transform" />
+                                <h4 className="font-medium text-slate-900">{faq.question}</h4>
+                                <ChevronDownIcon className="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform" />
                             </summary>
-                            <p className="p-4 pt-0 text-sm text-gray-300 leading-relaxed">
+                            <p className="p-4 pt-0 text-sm text-slate-600 leading-relaxed">
                                 {faq.answer}
                             </p>
                         </motion.details>

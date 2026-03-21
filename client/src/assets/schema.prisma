@@ -28,7 +28,7 @@ model Project {
   productDescription String   @default("")
   userPrompt         String   @default("")
   aspectRatio        String   @default("9:16")
-  targetLength       Int      @default(5)
+  targetLength       Int      @default(15)
   uploadedImages     String[]
   generatedImage     String   @default("")
   generatedVideo     String   @default("")
@@ -42,5 +42,4 @@ model Project {
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
 

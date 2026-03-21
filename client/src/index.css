@@ -1,17 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 @import 'tailwindcss';
 
+:root {
+    color: #0f172a;
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 28%),
+        radial-gradient(circle at top right, rgba(96, 165, 250, 0.14), transparent 22%),
+        linear-gradient(180deg, #f8fbff 0%, #eef6ff 50%, #f8fbff 100%);
+}
+
 * {
     font-family: 'Outfit', sans-serif;
 }
 
 @layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
     body {
-        @apply bg-gray-950 text-white antialiased;
+        @apply min-h-screen bg-transparent text-slate-900 antialiased;
     }
 
     button {
         @apply cursor-pointer;
+    }
+
+    a {
+        @apply transition-colors;
+    }
+
+    ::selection {
+        @apply bg-blue-100 text-blue-900;
     }
 }
 
@@ -49,19 +69,33 @@
 }
 
 @theme {
-    --color-primary: #8b5cf6;
-    --color-primary-hover: #7c3aed;
-    --color-secondary: #ec4899;
-    --color-dark-bg: #0f172a;
-    --color-dark-card: #1e293b;
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-secondary: #60a5fa;
+    --color-surface: #ffffff;
+    --color-surface-soft: #f8fbff;
+    --color-border: rgba(148, 163, 184, 0.22);
+    --color-ink: #0f172a;
 }
 
 @layer utilities {
     .glass-panel {
-        @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl;
+        @apply rounded-3xl border border-slate-200/80 bg-white/85 shadow-[0_24px_80px_-32px_rgba(37,99,235,0.28)] backdrop-blur-xl;
     }
 
     .btn-secondary {
-        @apply px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold backdrop-blur-sm border border-white/10 transition-all duration-300;
+        @apply inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-6 py-3 font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700;
+    }
+
+    .surface-panel {
+        @apply rounded-3xl border border-slate-200/80 bg-white/82 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.18)] backdrop-blur-xl;
+    }
+
+    .surface-muted {
+        @apply rounded-2xl border border-slate-200/80 bg-slate-50/85 shadow-sm;
+    }
+
+    .input-shell {
+        @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100;
     }
 }

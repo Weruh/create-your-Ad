@@ -12,11 +12,13 @@ import projectRouter from "./routes/projectRoutes.js";
 
 const app = express();
 
+// Webhooks must receive the raw body before JSON parsing touches the payload.
+app.post('/api/clerk', express.raw({ type: 'application/json' }), clerkWebhooks)
+
 // Middleware
 app.use(cors())
 app.use(express.json());
 app.use(clerkMiddleware());
-app.post('/api/clerk', express.raw({ type: 'application/json' }),  clerkWebhooks)
 
 
 

@@ -32,7 +32,7 @@ export default function Hero() {
                 <div className="max-w-6xl mx-auto px-4 min-h-screen max-md:w-screen max-md:overflow-hidden pt-32 md:pt-26 flex items-center justify-center">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
                         <div className="text-left">
-                            <motion.a href="https://prebuiltui.com/tailwind-templates?ref=pixel-forge" className="inline-flex items-center gap-3 pl-3 pr-4 py-1.5 rounded-full bg-white/10 mb-6 justify-start"
+                            <motion.a href="https://prebuiltui.com/tailwind-templates?ref=pixel-forge" className="mb-6 inline-flex items-center justify-start gap-3 rounded-full border border-blue-100 bg-white/90 pl-3 pr-4 py-1.5 shadow-sm"
                                 initial={{ y: 60, opacity: 0 }}
                                 whileInView={{ y: 0, opacity: 1 }}
                                 viewport={{ once: true }}
@@ -44,84 +44,83 @@ export default function Hero() {
                                             key={i}
                                             src={src}
                                             alt={`Client ${i + 1}`}
-                                            className="size-6 rounded-full border border-black/50"
+                                            className="size-6 rounded-full border border-white shadow-sm"
                                             width={40}
                                             height={40}
                                         />
                                     ))}
                                 </div>
-                                <span className="text-xs text-gray-200/90">
+                                <span className="text-xs text-slate-600">
                                     Trusted by 10,000+ creators
                                 </span>
                             </motion.a>
 
-                            <motion.h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6 max-w-xl"
+                            <motion.h1 className="mb-6 max-w-xl text-4xl font-bold leading-tight text-slate-950 md:text-5xl"
                                 initial={{ y: 60, opacity: 0 }}
                                 whileInView={{ y: 0, opacity: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1, delay: 0.1 }}
                             >
                                 Create viral UGC <br />
-                                <span className="bg-clip-text text-transparent bg-linear-to-r from-indigo-300 to-indigo-400">
+                                <span className="bg-clip-text text-transparent bg-linear-to-r from-blue-700 via-sky-600 to-cyan-500">
                                     in seconds.
                                 </span>
                             </motion.h1>
 
-                            <motion.p className="text-gray-300 max-w-lg mb-8"
+                            <motion.p className="mb-8 max-w-lg text-slate-600"
                                 initial={{ y: 60, opacity: 0 }}
                                 whileInView={{ y: 0, opacity: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1, delay: 0.2 }}
                             >
-                                Upload product images and a model photo - our AI
+                                Upload product images and a model photo. Our AI
                                 instantly produces professional lifestyle imagery
-                                and short-form videos optimized for commercials & 
+                                and short-form videos optimized for commercials and
                                 Reels.
-
                             </motion.p>
 
-                            <motion.div className="flex flex-col sm:flex-row items-center gap-4 mb-8"
+                            <motion.div className="mb-8 flex flex-col items-center gap-4 sm:flex-row"
                                 initial={{ y: 60, opacity: 0 }}
                                 whileInView={{ y: 0, opacity: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1, delay: 0.3 }}
                             >
                                 <a href="/" className="w-full sm:w-auto">
-                                    <PrimaryButton className="max-sm:w-full py-3 px-7">
+                                    <PrimaryButton className="max-sm:w-full px-7 py-3">
                                         Start generating - it's free
                                         <ArrowRightIcon className="size-4" />
                                     </PrimaryButton>
                                 </a>
 
-                                <GhostButton className="max-sm:w-full max-sm:justify-center py-3 px-5">
+                                <GhostButton className="max-sm:w-full max-sm:justify-center px-5 py-3">
                                     <PlayIcon className="size-4" />
-                                    watch demo
+                                    Watch demo
                                 </GhostButton>
                             </motion.div>
 
-                            <motion.div className="flex sm:inline-flex overflow-hidden items-center max-sm:justify-center text-sm text-gray-200 bg-white/10 rounded"
+                            <motion.div className="surface-panel flex overflow-hidden rounded-2xl text-sm max-sm:justify-center sm:inline-flex"
                                 initial={{ y: 60, opacity: 0 }}
                                 whileInView={{ y: 0, opacity: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1, delay: 0.1 }}
                             >
-                                <div className="flex items-center gap-2 p-2 px-3 sm:px-6.5 hover:bg-white/3 transition-colors">
-                                    <ZapIcon className="size-4 text-sky-500" />
+                                <div className="flex items-center gap-2 p-2 px-3 text-slate-700 transition-colors hover:bg-blue-50 sm:px-6.5">
+                                    <ZapIcon className="size-4 text-blue-600" />
                                     <div>
                                         <div>seconds to create</div>
-                                        <div className="text-xs text-gray-400">
-                                            optimized social formats 
+                                        <div className="text-xs text-slate-500">
+                                            optimized social formats
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="hidden sm:block h-6 w-px bg-white/6" />
+                                <div className="hidden h-6 w-px bg-slate-200 sm:block" />
 
-                                <div className="flex items-center gap-2 p-2 px-3 sm:px-6.5 hover:bg-white/3 transition-colors">
-                                    <CheckIcon className="size-4 text-cyan-500" />
+                                <div className="flex items-center gap-2 p-2 px-3 text-slate-700 transition-colors hover:bg-blue-50 sm:px-6.5">
+                                    <CheckIcon className="size-4 text-cyan-600" />
                                     <div>
-                                        <div>commercial rights </div>
-                                        <div className="text-xs text-gray-400">
+                                        <div>commercial rights</div>
+                                        <div className="text-xs text-slate-500">
                                             Use anywhere, no fuss
                                         </div>
                                     </div>
@@ -129,35 +128,34 @@ export default function Hero() {
                             </motion.div>
                         </div>
 
-                        {/* Right: modern mockup card */}
                         <motion.div className="mx-auto w-full max-w-lg"
                             initial={{ opacity: 0 }}
                             whileInView={{ opacity: 1 }}
                             viewport={{ once: true }}
                             transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1, delay: 0.5 }}
                         >
-                            <motion.div className="rounded-3xl overflow-hidden border border-white/6 shadow-2xl bg-linear-to-b from-black/50 to-transparent">
-                                <div className="relative aspect-16/10 bg-gray-900">
+                            <motion.div className="surface-panel overflow-hidden rounded-[2rem] p-3">
+                                <div className="relative aspect-16/10 overflow-hidden rounded-[1.4rem] bg-slate-100">
                                     <img
                                         src={mainImageUrl}
                                         alt="agency-work-preview"
                                         className="w-full h-full object-cover object-center"
                                     />
 
-                                    <div className="absolute left-4 top-4 px-3 py-1 rounded-full bg-black/15 backdrop-blur-sm text-xs">
-                                        Social-ready • 9:16 & 16:9
+                                    <div className="absolute left-4 top-4 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-xs text-slate-700 shadow-sm backdrop-blur-sm">
+                                        Social-ready / 9:16 & 16:9
                                     </div>
 
                                     <div className="absolute right-4 bottom-4">
-                                        <button className="inline-flex items-center gap-2 rounded-full px-4 py-2 bg-white/6 backdrop-blur-sm hover:bg-white/10 transition focus:outline-none">
-                                            <PlayIcon className="size-4" />
-                                            <span className="text-xs">Preview</span>
+                                        <button className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-4 py-2 text-slate-700 shadow-sm transition hover:bg-blue-50 focus:outline-none">
+                                            <PlayIcon className="size-4 text-blue-600" />
+                                            <span className="text-xs font-medium">Preview</span>
                                         </button>
                                     </div>
                                 </div>
                             </motion.div>
 
-                            <div className="mt-4 flex gap-3 items-center justify-start">
+                            <div className="mt-4 flex items-center justify-start gap-3">
                                 {galleryStripImages.map((src, i) => (
                                     <motion.div
                                         key={i}
@@ -165,7 +163,7 @@ export default function Hero() {
                                         whileInView={{ y: 0, opacity: 1 }}
                                         viewport={{ once: true }}
                                         transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1, delay: 0.1 + i * 0.1 }}
-                                        className="w-14 h-10 rounded-lg overflow-hidden border border-white/6"
+                                        className="h-10 w-14 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
                                     >
                                         <img
                                             src={src}
@@ -174,7 +172,7 @@ export default function Hero() {
                                         />
                                     </motion.div>
                                 ))}
-                                <motion.div className="text-sm text-gray-400 ml-2 flex items-center gap-2"
+                                <motion.div className="ml-2 flex items-center gap-2 text-sm text-slate-500"
                                     initial={{ y: 60, opacity: 0 }}
                                     whileInView={{ y: 0, opacity: 1 }}
                                     viewport={{ once: true }}
@@ -193,8 +191,7 @@ export default function Hero() {
                 </div>
             </section>
 
-            {/* LOGO MARQUEE */}
-            <motion.section className="border-y border-white/6 bg-white/1 max-md:mt-10"
+            <motion.section className="max-md:mt-10 border-y border-slate-200/80 bg-white/65 backdrop-blur-sm"
                 initial={{ y: 60, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}
@@ -206,7 +203,7 @@ export default function Hero() {
                             {trustedLogosText.concat(trustedLogosText).map((logo, i) => (
                                 <span
                                     key={i}
-                                    className="mx-6 text-sm md:text-base font-semibold text-gray-400 hover:text-gray-300 tracking-wide transition-colors"
+                                    className="mx-6 text-sm font-semibold tracking-wide text-slate-400 transition-colors hover:text-blue-700 md:text-base"
                                 >
                                     {logo}
                                 </span>

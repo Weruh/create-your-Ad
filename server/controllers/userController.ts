@@ -1,6 +1,5 @@
 import { Request, Response } from "express"
 import * as Sentry from "@sentry/node"
-import { clerkClient } from "@clerk/express";
 import { prisma } from "../configs/prisma.js";
 
 const PLAN_CREDITS = {
@@ -13,12 +12,37 @@ const getSingleParam = (value: string | string[] | undefined) => {
     return Array.isArray(value) ? value[0] : value;
 }
 
+const getStringClaim = (claims: Record<string, unknown> | null | undefined, keys: string[]) => {
+    for (const key of keys) {
+        const value = claims?.[key];
+        if (typeof value === "string" && value.trim()) {
+            return value.trim();
+        }
+    }
+
+    return "";
+}
+
+const buildUserProfileFromClaims = (claims: Record<string, unknown> | null | undefined) => {
+    const firstName = getStringClaim(claims, ["first_name", "given_name"]);
+    const lastName = getStringClaim(claims, ["last_name", "family_name"]);
+    const fullName = getStringClaim(claims, ["name", "full_name"]);
+    const email = getStringClaim(claims, ["email", "email_address", "primary_email_address"]);
+    const name = fullName || `${firstName} ${lastName}`.trim() || getStringClaim(claims, ["username"]);
+    const image = getStringClaim(claims, ["image_url", "picture", "avatar_url"]);
+
+    return { email, name, image };
+}
+
 
 // Get User Credits
 export const getUserCredits = async (req: Request, res: Response) => {
     try {
         
-        const {userId, has} = req.auth();
+        const auth = req.auth() as ReturnType<Request["auth"]> & {
+            sessionClaims?: Record<string, unknown> | null;
+        };
+        const {userId, has, sessionClaims} = auth;
         if(!userId) {return res.status(401).json({message: 'Unauthorized'})}
 
         const plan = has({ plan: 'premium' })
@@ -27,44 +51,54 @@ export const getUserCredits = async (req: Request, res: Response) => {
                 ? 'pro'
                 : 'free';
 
-        const expectedCredits = PLAN_CREDITS[plan];
-
         let user = await prisma.user.findUnique({where :{id: userId}})
+        const claimProfile = buildUserProfileFromClaims(
+            sessionClaims && typeof sessionClaims === "object" ? sessionClaims as Record<string, unknown> : null
+        );
 
         if (!user) {
-            const clerkUser = await clerkClient.users.getUser(userId);
-            const primaryEmail = clerkUser.emailAddresses[0]?.emailAddress;
-
-            if (!primaryEmail) {
-                return res.status(400).json({message: 'User email not found'})
-            }
+            const profile = {
+                email: claimProfile.email || `${userId}@clerk.local`,
+                name: claimProfile.name || "Clerk User",
+                image: claimProfile.image
+            };
 
             user = await prisma.user.upsert({
                 where: { id: userId },
                 update: {
-                    email: primaryEmail,
-                    name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || clerkUser.username || primaryEmail,
-                    image: clerkUser.imageUrl,
-                    credits: expectedCredits
+                    email: profile.email,
+                    name: profile.name,
+                    image: profile.image,
+                    credits: PLAN_CREDITS[plan]
                 },
                 create: {
                     id: userId,
-                    email: primaryEmail,
-                    name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || clerkUser.username || primaryEmail,
-                    image: clerkUser.imageUrl,
-                    credits: expectedCredits
+                    email: profile.email,
+                    name: profile.name,
+                    image: profile.image,
+                    credits: PLAN_CREDITS[plan]
                 }
             });
         }
 
-        if (user.credits !== expectedCredits) {
-            await prisma.user.update({
+        const nextProfile = {
+            email: claimProfile.email || user.email,
+            name: claimProfile.name || user.name,
+            image: claimProfile.image || user.image
+        };
+
+        if (user.email !== nextProfile.email || user.name !== nextProfile.name || user.image !== nextProfile.image) {
+            user = await prisma.user.update({
                 where: { id: userId },
-                data: { credits: expectedCredits }
+                data: {
+                    email: nextProfile.email,
+                    name: nextProfile.name,
+                    image: nextProfile.image
+                }
             })
         }
 
-        res.json({credits: expectedCredits, plan})
+        res.json({credits: user.credits, plan})
 
     } catch (error: any) {
         Sentry.captureException(error);

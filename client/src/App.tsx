@@ -17,7 +17,7 @@ function App() {
 	return (
 		<>
 		    
-			<Toaster toastOptions={{style: {background: '#333', color: "#fff"}}} />
+			<Toaster toastOptions={{style: {background: '#ffffff', color: "#0f172a", border: '1px solid rgba(191, 219, 254, 1)', boxShadow: '0 18px 50px -24px rgba(37,99,235,0.35)'}}} />
 			<SoftBackdrop />
 			<LenisScroll />
 			<Navbar />

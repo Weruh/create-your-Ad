@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import api from "../configs/axios";
 
 const aspectRatios = ["9:16", "1:1", "16:9"] as const;
+const CREDITS_REFRESH_EVENT = 'credits:refresh';
 
 const Generator = () => {
  
@@ -69,6 +70,7 @@ const Generator = () => {
                 headers: { Authorization: `Bearer ${token}`}
             })
 
+            window.dispatchEvent(new Event(CREDITS_REFRESH_EVENT))
             toast.success(data.message)
             navigate('/result/' + data.projectId)
 
@@ -86,7 +88,7 @@ const Generator = () => {
     
 
     return (
-        <div className="min-h-screen px-6 pb-24 pt-32 text-white md:px-12">
+        <div className="min-h-screen px-6 pb-24 pt-32 text-slate-900 md:px-12">
             <form onSubmit={handleGenerate} className="mx-auto max-w-6xl">
                 <Title
                     heading="Create In-Context Image"
@@ -110,35 +112,35 @@ const Generator = () => {
                     </div>
 
                   { /* right col */}
-                    <div className="w-full text-gray-300">
+                    <div className="surface-panel w-full p-6 text-slate-700 md:p-8">
                         <div className="mb-4">
-                            <label htmlFor="name" className="block text-sm mb-4">Project Name</label>
-                            <input type="text" id="name" value={name} onChange={(e)=> setName (e.target.value)} placeholder="Name your project"  className="w-full bg-white/3 rounded-lg border-2 p-4 text-sm border-violet-200/10 focus:border-violet-500/50 outline-none transition-all"/>
+                            <label htmlFor="name" className="block text-sm font-medium mb-3 text-slate-700">Project Name</label>
+                            <input type="text" id="name" value={name} onChange={(e)=> setName (e.target.value)} placeholder="Name your project"  className="input-shell"/>
                         </div>
-                         <div className="mb-4 text-gray-300">
-                            <label htmlFor="productName" className="block text-sm mb-4">Product Name</label>
-                            <input type="text" id="productName" value={productName} onChange={(e)=>setProductName (e.target.value)} placeholder="Enter the name of the product"  className="w-full bg-white/3 rounded-lg border-2 p-4 text-sm border-violet-200/10 focus:border-violet-500/50 outline-none transition-all"/>
+                         <div className="mb-4 text-slate-700">
+                            <label htmlFor="productName" className="block text-sm font-medium mb-3 text-slate-700">Product Name</label>
+                            <input type="text" id="productName" value={productName} onChange={(e)=>setProductName (e.target.value)} placeholder="Enter the name of the product"  className="input-shell"/>
                         </div>
-                        <div className="mb-4 text-gray-300">
-                            <label htmlFor="productDescription" className="block text-sm mb-4">Product Description <span className="text-xs text-violet-400">(optional)</span></label>
-                            <textarea id="productDescription" rows={4} value={productDescription} onChange={(e)=>setProductDescription(e.target.value)} placeholder="Enter the description of the product" className="w-full bg-white/3 rounded-lg border-2 p-4 text-sm border-violet-200/10 focus:border-violet-500/50 outline-none resize-none transition-all" />
+                        <div className="mb-4 text-slate-700">
+                            <label htmlFor="productDescription" className="block text-sm font-medium mb-3 text-slate-700">Product Description <span className="text-xs text-blue-600">(optional)</span></label>
+                            <textarea id="productDescription" rows={4} value={productDescription} onChange={(e)=>setProductDescription(e.target.value)} placeholder="Enter the description of the product" className="input-shell resize-none" />
                         </div>
-                        <div className="mb-4 text-gray-300">
-                            <label className="block text-sm mb-4">Aspect Ratio</label>
+                        <div className="mb-4 text-slate-700">
+                            <label className="block text-sm font-medium mb-3 text-slate-700">Aspect Ratio</label>
                             <div className="flex gap-3">
-                                 <RectangleVerticalIcon onClick={()=> setAspectRatio('9:16')} className={`p-2.5 size-13 bg-white/6 rounded transition-all ring-2 ring-transparent cursor-pointer ${aspectRatio === '9:16' ? 'ring-violet-500/50 bg-white/10' : ''}`} />
-                                 <RectangleHorizontalIcon onClick={()=> setAspectRatio('16:9')} className={`p-2.5 size-13 bg-white/6 rounded transition-all ring-2 ring-transparent cursor-pointer ${aspectRatio === '16:9' ? 'ring-violet-500/50 bg-white/10' : ''}`} />
+                                 <RectangleVerticalIcon onClick={()=> setAspectRatio('9:16')} className={`p-2.5 size-13 rounded-2xl border transition-all cursor-pointer ${aspectRatio === '9:16' ? 'border-blue-400 bg-blue-50 text-blue-700 ring-4 ring-blue-100' : 'border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-700'}`} />
+                                 <RectangleHorizontalIcon onClick={()=> setAspectRatio('16:9')} className={`p-2.5 size-13 rounded-2xl border transition-all cursor-pointer ${aspectRatio === '16:9' ? 'border-blue-400 bg-blue-50 text-blue-700 ring-4 ring-blue-100' : 'border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-700'}`} />
                             </div>
                         </div>
-                            <div className="mb-4 text-gray-300">
-                            <label htmlFor="userPrompt" className="block text-sm mb-4">User Prompt <span className="text-xs text-violet-400">(optional)</span></label>
-                            <textarea id="userPrompt" rows={4} value={userPrompt} onChange={(e)=>setUserPrompt(e.target.value)} placeholder="Describe how you want the narration to be." className="w-full bg-white/3 rounded-lg border-2 p-4 text-sm border-violet-200/10 focus:border-violet-500/50 outline-none resize-none transition-all" />
+                            <div className="mb-4 text-slate-700">
+                            <label htmlFor="userPrompt" className="block text-sm font-medium mb-3 text-slate-700">User Prompt <span className="text-xs text-blue-600">(optional)</span></label>
+                            <textarea id="userPrompt" rows={4} value={userPrompt} onChange={(e)=>setUserPrompt(e.target.value)} placeholder="Describe how you want the narration to be." className="input-shell resize-none" />
                         </div>
                      <p></p>
                     </div>
                 </div>
                 <div className="flex justify-center mt-10">
-                     <PrimaryButton disabled={isGenerating} className="px-10 py-3 rounded-md disabled:opacity-70 disabled:cursor-not-allowed">
+                     <PrimaryButton disabled={isGenerating} className="px-10 py-3 rounded-full disabled:opacity-70 disabled:cursor-not-allowed">
                         {isGenerating ? (<><Loader2Icon className="size-5 animate-spin" /> Generating...</>) :( <> <Wand2Icon className="size-5" /> Generate Image</>)}
                      </PrimaryButton>
                 </div>

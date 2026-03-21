@@ -1,42 +1,115 @@
 import { Request, Response } from "express";
-import * as Sentry from "@sentry/node"
+import * as Sentry from "@sentry/node";
+import fs from "fs";
 import { prisma } from "../configs/prisma.js";
-import ai from "../configs/ai.js";
-import {v2 as cloudinary } from 'cloudinary'
-import { GenerateContentConfig,HarmBlockThreshold, HarmCategory } from "@google/genai";
-import path from "path";
-import fs from 'fs'
-import axios from "axios";
+import fal from "../configs/fal.js";
+import { v2 as cloudinary } from "cloudinary";
 
+type FalFile = {
+    url?: string;
+};
 
+type FalImageResponse = {
+    images?: FalFile[];
+};
 
-const loadImage = (path: string, mimeType: string)=>{
-    return {
-        inlineData: {
-            data: fs.readFileSync(path).toString('base64'),
-            mimeType
-        }
-    }
-}
+type FalVideoResponse = {
+    video?: FalFile;
+};
+
+const DEFAULT_VIDEO_DURATION_SECONDS = 15;
 
 const getErrorMessage = (error: unknown) => {
     return error instanceof Error ? error.message : "Unknown error";
-}
+};
 
 const getSingleParam = (value: string | string[] | undefined) => {
     return Array.isArray(value) ? value[0] : value;
-}
+};
+
+const getFalImageSize = (aspectRatio?: string) => {
+    switch (aspectRatio) {
+        case "16:9":
+            return { width: 1280, height: 720 };
+        case "1:1":
+            return { width: 1024, height: 1024 };
+        case "9:16":
+        default:
+            return { width: 720, height: 1280 };
+    }
+};
+
+const getFalVideoDuration = () => {
+    return String(DEFAULT_VIDEO_DURATION_SECONDS);
+};
+
+const ensureFalConfigured = () => {
+    if (!process.env.FAL_KEY) {
+        throw new Error("FAL_KEY is not configured");
+    }
+};
+
+const removeUploadedFiles = async (files: Express.Multer.File[]) => {
+    await Promise.all(
+        files.map(async (file) => {
+            if (!file.path) {
+                return;
+            }
+
+            try {
+                await fs.promises.unlink(file.path);
+            } catch {
+                // Ignore temp-file cleanup failures.
+            }
+        })
+    );
+};
+
+const buildImagePrompt = (userPrompt?: string) => {
+    return [
+        "Use image 1 as the product reference and image 2 as the person/model reference.",
+        "Create a realistic ecommerce advertisement photo.",
+        "The person from image 2 should naturally hold, wear, or use the exact product from image 1.",
+        "Preserve the product design, branding, proportions, and important visual details from image 1.",
+        "Preserve the person identity and facial features from image 2.",
+        "Match lighting, shadows, scale, and perspective so the final scene looks like a real professional studio shoot.",
+        "Produce photorealistic, premium marketing imagery.",
+        userPrompt?.trim() || "",
+    ]
+        .filter(Boolean)
+        .join(" ");
+};
+
+const buildVideoPrompt = (productName: string, productDescription: string, userPrompt: string) => {
+    return [
+        `Create a short cinematic product showcase video for ${productName}.`,
+        productDescription ? `Product description: ${productDescription}.` : "",
+        "Animate the subject naturally from the first frame while keeping the product design consistent.",
+        "Focus on subtle camera movement, believable motion, premium ad styling, and photorealistic detail.",
+        "Do not add text overlays, subtitles, watermarks, or UI elements.",
+        userPrompt?.trim() || "",
+    ]
+        .filter(Boolean)
+        .join(" ");
+};
 
 
 export const createProject = async( req:Request, res:Response) =>{
     let tempProjectId: string | undefined;
     let isCreditDeducted = false;
+    let images: Express.Multer.File[] = [];
     const { userId } = req.auth();
 
     try {
-        const {name = 'New Project', aspectRatio, userPrompt, productName, productDescription, targetLength = 5 } = req.body;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
 
-        const images: any = req.files;
+        ensureFalConfigured();
+
+        const {name = 'New Project', aspectRatio, userPrompt, productName, productDescription, targetLength = DEFAULT_VIDEO_DURATION_SECONDS } = req.body;
+
+        images = (req.files as Express.Multer.File[] | undefined) ?? [];
 
         if (images.length < 2 || !productName) {
             return res.status(400).json({message: 'Please upload at least 2 images'})
@@ -71,7 +144,7 @@ export const createProject = async( req:Request, res:Response) =>{
                 productDescription,
                 userPrompt,
                 aspectRatio,
-                targetLength: parseInt(targetLength),
+                targetLength: Number.parseInt(String(targetLength), 10) || DEFAULT_VIDEO_DURATION_SECONDS,
                 uploadedImages,
                 isGenerating:true
             }
@@ -79,78 +152,27 @@ export const createProject = async( req:Request, res:Response) =>{
 
         tempProjectId = project.id;
 
-        const model = 'gemini-2.5-flash-image';
-
-        const generationConfig: GenerateContentConfig = {
-            maxOutputTokens: 32768,
-            temperature:1,
-            topP: 0.95,
-            imageConfig:{
-                aspectRatio: aspectRatio || '9:16'
+        const result = await fal.subscribe("wan/v2.6/image-to-image", {
+            input: {
+                prompt: buildImagePrompt(userPrompt),
+                image_urls: uploadedImages.slice(0, 2),
+                image_size: getFalImageSize(aspectRatio),
+                num_images: 1,
+                enable_prompt_expansion: true,
+                enable_safety_checker: true,
             },
-            safetySettings: [
-                {
-                    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                    threshold: HarmBlockThreshold.OFF,
-                },
-                {
-                    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                    threshold: HarmBlockThreshold.OFF,
-                },
-                {
-                    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                    threshold: HarmBlockThreshold.OFF,
-                },
-                {
-                    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-                    threshold: HarmBlockThreshold.OFF,
-                },
-            ],
+            timeout: 3 * 60 * 1000,
+        });
+
+        const generatedImageUrl = (result.data as FalImageResponse)?.images?.[0]?.url;
+
+        if (!generatedImageUrl) {
+            throw new Error("Failed to generate image");
         }
 
-        // image to base64 structure for ai model
-        const img1base64 = loadImage (images[0].path, images[0].mimeType);
-        const img2base64 = loadImage (images[1].path, images[1].mimeType);
-
-        const prompt = {
-            text:`Combine the person and product into a realistic photo.
-            Make the person naturally hold or use the product.
-            Match lightining, shadows , scale and perspective.
-            Make the person stand in professional studio lighting.
-            Output ecommerce-quality photo realistic imagery.
-            ${userPrompt} `
-        }
-       
-        // Generate the image using the ai model
-        const response: any = await ai.models.generateContent({
-            model,
-            contents: [img1base64, img2base64, prompt],
-            config: generationConfig,
-
-        })
-
-        //Check if the response is valid
-        if (!response?.candidates?.[0]?.content?.parts) {
-            throw new Error ('Unexpected response')
-        }
-
-        const parts = response.candidates[0].content.parts;
-
-        let finalBuffer: Buffer | null = null
-
-        for(const part of parts){
-           if (part.inlineData) {
-            finalBuffer = Buffer.from(part.inlineData.data, 'base64')
-           }
-        }
-
-        if (!finalBuffer) {
-            throw new Error("Failed to generate image");  
-        }
-
-        const base64Image = `data:image/png;base64,${finalBuffer.toString('base64')}`
-
-        const uploadResult = await cloudinary.uploader.upload(base64Image, {resource_type: 'image'});
+        const uploadResult = await cloudinary.uploader.upload(generatedImageUrl, {
+            resource_type: "image",
+        });
 
         await prisma.project.update({
             where: {id: project.id},
@@ -160,7 +182,7 @@ export const createProject = async( req:Request, res:Response) =>{
             }
         })
 
-        res.json({projectId: project.id})
+        res.json({ message: "Image generation completed", projectId: project.id })
 
     } catch (error:any) {
         const errorMessage = getErrorMessage(error);
@@ -182,6 +204,8 @@ export const createProject = async( req:Request, res:Response) =>{
         }
         Sentry.captureException(error);
         res.status(500).json({ message: errorMessage})
+    } finally {
+        await removeUploadedFiles(images);
     }
 }
 
@@ -190,22 +214,31 @@ export const createVideo = async( req:Request, res:Response) =>{
     const { projectId } = req.body;
     let isCreditDeducted = false;
 
-    const  user =  await prisma.user.findUnique({
-        where: {id: userId}
-    })
-
-    if (!user || user.credits < 10) {
-        return res.status(401).json({ message: 'Insufficient credits'})
-    }
-
-    // deduct credits for video generation
-    await prisma.user.update({
-        where: {id: userId},
-        data: {credits: {decrement: 10}}
-    }).then(()=>{ isCreditDeducted = true})
-
 
     try {
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        ensureFalConfigured();
+
+        if (!projectId) {
+            return res.status(400).json({ message: "Project id is required" });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: {id: userId}
+        })
+
+        if (!user || user.credits < 10) {
+            return res.status(401).json({ message: 'Insufficient credits'})
+        }
+
+        await prisma.user.update({
+            where: {id: userId},
+            data: {credits: {decrement: 10}}
+        }).then(()=>{ isCreditDeducted = true})
+
         const project = await prisma.project.findUnique({
             where: {id: projectId, userId},
             include: {user: true}
@@ -226,56 +259,35 @@ export const createVideo = async( req:Request, res:Response) =>{
 
         const prompt = `make the person showcase the product which is ${project.productName} ${project.productDescription  &&  `and Product Description: ${project.productDescription}`}`
 
-        const model = 'veo-3.1-generate-preview'
-
         if (!project.generatedImage) {
             throw new Error("Generated image not found");
         }
 
-        const image = await axios.get(project.generatedImage, {responseType: 'arraybuffer'})
-
-        const imageBytes: any = Buffer.from(image.data)
-
-        let operation: any = await ai.models.generateVideos({
-            model,
-            prompt,
-            image: {
-                imageBytes: imageBytes.toString('base64'),
-                mimeType: 'image/png'
+        const result = await fal.subscribe("wan/v2.6/image-to-video", {
+            input: {
+                prompt: buildVideoPrompt(
+                    project.productName,
+                    project.productDescription,
+                    project.userPrompt
+                ),
+                image_url: project.generatedImage,
+                duration: getFalVideoDuration(),
+                resolution: "720p",
+                enable_prompt_expansion: true,
+                enable_safety_checker: true,
             },
-            config: {
-                aspectRatio: project?.aspectRatio || '9:16',
-                numberOfVideos: 1,
-                resolution: '720',
-            }
-        })
+            timeout: 15 * 60 * 1000,
+        });
 
-        while (!operation.done) {
-            console.log('Waiting for video generation to complete...');
-            await new Promise((resolve)=>setTimeout(resolve, 10000));
-            operation = await ai.operations.getVideosOperation({
-                operation: operation,
-            })
+        const generatedVideoUrl = (result.data as FalVideoResponse)?.video?.url;
+
+        if (!generatedVideoUrl) {
+            throw new Error("Failed to generate video");
         }
 
-        const filename = `${userId}-${Date.now()}.mp4`;
-        const filePath = path.join('videos', filename)
-
-        // Create the images directory if it doesn't exist
-        fs.mkdirSync('videos', {recursive: true})
-        
-        if (!operation.response.generatedVideos) {
-            throw new Error(operation.response.raiMediafilteredReasons[0]);
-        }
-
-        // download the video
-        await ai.files.download({
-            file: operation.response.generatedVideos[0].video,
-            downloadPath: filePath,
-        })
-
-        const uploadResult = await cloudinary.uploader.upload(filePath, {
-            resource_type: 'video'});
+        const uploadResult = await cloudinary.uploader.upload(generatedVideoUrl, {
+            resource_type: "video",
+        });
 
         await prisma.project.update({
             where: {id: projectId},
@@ -285,8 +297,6 @@ export const createVideo = async( req:Request, res:Response) =>{
             }
         })
 
-        // remove video file from disk after upload
-        fs.unlinkSync(filePath);
         res.json({ message: 'Video generation completed', videoUrl: uploadResult.secure_url})
 
 

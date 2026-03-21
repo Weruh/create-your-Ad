@@ -5,17 +5,16 @@ import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { assets } from '../assets/assets';
 import { useClerk, useUser, UserButton, useAuth } from '@clerk/react';
-import toast from 'react-hot-toast';
 import api from '../configs/axios';
 
 export default function Navbar() {
-
+    const CREDITS_REFRESH_EVENT = 'credits:refresh';
 
     const navigate = useNavigate()
     const { user } = useUser()
     const { openSignIn, openSignUp } = useClerk()
     const [isOpen, setIsOpen] = useState(false);
-    const [credits, setCredits] = useState(0);
+    const [credits, setCredits] = useState<number | null>(null);
     const { pathname } = useLocation();
     const { getToken } = useAuth()
 
@@ -28,6 +27,7 @@ export default function Navbar() {
 
     useEffect(() => {
         if (!user) {
+            setCredits(null);
             return;
         }
 
@@ -44,23 +44,24 @@ export default function Navbar() {
                     setCredits(data.credits)
                 }
             } catch (error: unknown) {
-                const apiMessage = typeof error === 'object'
-                    && error !== null
-                    && 'response' in error
-                    && typeof (error as { response?: { data?: { message?: unknown } } }).response?.data?.message === 'string'
-                    ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
-                    : undefined;
+                if (isMounted) {
+                    setCredits(null)
+                }
 
-                const fallbackMessage = error instanceof Error ? error.message : 'Failed to load credits';
-                toast.error(apiMessage || fallbackMessage)
-                console.error(error);
+                console.error('Failed to load credits', error);
             }
         };
 
+        const handleCreditsRefresh = () => {
+            void loadUserCredits();
+        };
+
         void loadUserCredits();
+        window.addEventListener(CREDITS_REFRESH_EVENT, handleCreditsRefresh);
 
         return () => {
             isMounted = false;
+            window.removeEventListener(CREDITS_REFRESH_EVENT, handleCreditsRefresh);
         };
     }, [getToken, pathname, user])
 
@@ -71,14 +72,14 @@ export default function Navbar() {
             viewport={{ once: true }}
             transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1 }}
         >
-            <div className='max-w-6xl mx-auto flex items-center justify-between bg-black/50 backdrop-blur-md border border-white/4 rounded-2xl p-3'>
+            <div className='surface-panel max-w-6xl mx-auto flex items-center justify-between rounded-2xl p-3'>
                 <Link to='/' onClick={() => scrollTo(0, 0)}>
                     <img src={assets.logo} alt="logo" className="h-8" />
                 </Link>
 
-                <div className='hidden md:flex items-center gap-8 text-sm font-medium text-gray-300'>
+                <div className='hidden md:flex items-center gap-8 text-sm font-medium text-slate-600'>
                     {navLinks.map((link) => (
-                        <Link onClick={() => scrollTo(0, 0)} to={link.href} key={link.name} className="hover:text-white transition">
+                        <Link onClick={() => scrollTo(0, 0)} to={link.href} key={link.name} className="hover:text-blue-700 transition">
                             {link.name}
                         </Link>
                     ))}
@@ -86,15 +87,15 @@ export default function Navbar() {
 
                 {!user ? (
                     <div className='hidden md:flex items-center gap-3'>
-                        <button onClick={() => openSignIn()} className='text-sm font-medium text-gray-300 hover:text-white transition max-sm:hidden'>
+                        <button onClick={() => openSignIn()} className='text-sm font-medium text-slate-600 hover:text-blue-700 transition max-sm:hidden'>
                             Sign in
                         </button>
                         <PrimaryButton onClick={() => openSignUp()} className='max-sm:text-xs hidden sm:inline-block'>Get Started</PrimaryButton>
                     </div>
                 ) : (
                     <div className="flex gap-2">
-                        <GhostButton onClick={() => navigate('/plans')} className='border-none text-gray-300 sm:py-1'>
-                            Credits: {credits}
+                        <GhostButton onClick={() => navigate('/plans')} className='border-slate-200 text-slate-700 sm:py-1'>
+                            Credits: {credits ?? '--'}
                         </GhostButton>
                         <UserButton>
                             <UserButton.MenuItems>
@@ -107,28 +108,28 @@ export default function Navbar() {
                     </div>
                 )}
 
-                {!user && <button onClick={() => setIsOpen(!isOpen)} className='md:hidden'>
-                    <MenuIcon className='size-6' />
+                {!user && <button onClick={() => setIsOpen(!isOpen)} className='md:hidden rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm'>
+                    <MenuIcon className='size-5' />
                 </button>}
 
 
 
             </div>
-            <div className={`flex flex-col items-center justify-center gap-6 text-lg font-medium fixed inset-0 bg-black/40 backdrop-blur-md z-50 transition-all duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
+            <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-white/90 text-lg font-medium text-slate-800 backdrop-blur-xl transition-all duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
                 {navLinks.map((link) => (
-                    <a key={link.name} href={link.href} onClick={() => setIsOpen(false)}>
+                    <a key={link.name} href={link.href} onClick={() => setIsOpen(false)} className="hover:text-blue-700">
                         {link.name}
                     </a>
                 ))}
 
-                <button onClick={() => { setIsOpen(false); openSignIn() }} className='font-medium text-gray-300 hover:text-white transition'>
+                <button onClick={() => { setIsOpen(false); openSignIn() }} className='font-medium text-slate-600 hover:text-blue-700 transition'>
                     Sign in
                 </button>
                 <PrimaryButton onClick={() => { setIsOpen(false); openSignUp() }}>Get Started</PrimaryButton>
 
                 <button
                     onClick={() => setIsOpen(false)}
-                    className="rounded-md bg-white p-2 text-gray-800 ring-white active:ring-2"
+                    className="rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm ring-blue-200 active:ring-2"
                 >
                     <XIcon />
                 </button>
